@@ -1,0 +1,50 @@
+server {
+        listen 80 default_server;
+        listen [::]:80 default_server;
+        listen 443 ssl http2 default_server;
+        listen [::]:443 ssl http2 default_server;
+        root /config/www;
+        index index.html index.htm index.php;
+        server_name _;
+        include /config/nginx/proxy-confs/*.subfolder.conf;
+        include /config/nginx/ssl.conf;
+        client_max_body_size 0;
+	modsecurity on;
+	modsecurity_rules_file /etc/nginx/modsec/main.conf;
+
+        location / {
+                try_files $uri $uri/ =404;
+        }
+
+        location ~ \.php$ {
+                fastcgi_split_path_info ^(.+\.php)(/.+)$;
+                fastcgi_pass 127.0.0.1:9000;
+                fastcgi_index index.php;
+                include /etc/nginx/fastcgi_params;
+        }
+
+	lua_need_request_body on;
+
+	set $resp_body "";
+	set $req_body "";
+	set $req_headers "";
+
+	rewrite_by_lua_block {
+	local req_headers = "Headers: ";
+	ngx.var.req_body = ngx.req.get_body_data();
+	local h, err = ngx.req.get_headers()
+	for k, v in pairs(h) do
+	req_headers = req_headers .. k .. ": " .. v .. "\n";
+	end
+
+	ngx.var.req_headers = req_headers;
+	}
+
+	body_filter_by_lua '
+	local resp_body = string.sub(ngx.arg[1], 1, 1000)
+	ngx.ctx.buffered = (ngx.ctx.buffered or "") .. resp_body
+	if ngx.arg[2] then
+	ngx.var.resp_body = ngx.ctx.buffered
+	end
+	';
+}

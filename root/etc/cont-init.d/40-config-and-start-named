@@ -1,0 +1,86 @@
+#!/usr/bin/with-contenv bash
+#
+# Display variables for troubleshooting
+echo "Configuring and starting named"
+
+echo -e "Variables set:\\n\
+DOMAIN=${DOMAIN}\\n\
+IP=${IP}"
+
+
+mkdir -p /etc/bind/master/
+mkdir -p /config/log/named/
+touch /config/log/named/named.log
+
+cat << EOF > /etc/bind/master/myzone.db
+\$TTL 1
+\$ORIGIN $DOMAIN.
+
+@       IN      SOA     $DOMAIN.      root.$DOMAIN. (
+                        2020010901      ; serial number YYMMDDNN
+                        28800           ; Refresh
+                        7200            ; Retry
+                        604800          ; Expire
+                        1               ; Min TTL
+                        )
+        IN      NS      $IP
+*       IN      A       $IP
+
+; \$ORIGIN a.$DOMAIN.
+; 
+; *       IN      A       127.0.0.1
+EOF
+
+
+RFC2136_CONF=$(ddns-confgen -a HMAC-SHA512 -k keyname. -q)
+
+cat << EOF > /etc/bind/named.conf
+options {
+        directory "/var/bind";
+        // Configure the IPs to listen on here.
+        listen-on { any; };
+        listen-on-v6 { none; };
+        // If you want to allow only specific hosts to use the DNS server:
+        allow-query { any; };
+        allow-transfer { none;};
+        pid-file "/var/run/named/named.pid";
+        allow-recursion { none; };
+        recursion no;
+};
+
+logging {
+        channel bind_log {
+                file "/config/log/named/named.log" versions 3 size 5m;
+                severity info;
+                print-category yes;
+                print-severity yes;
+                print-time yes;
+        };
+        category default { bind_log; };
+        category update { bind_log; };
+        category update-security { bind_log; };
+        category security { bind_log; };
+        category queries { bind_log; };
+        category lame-servers { null; };
+};
+
+zone "$DOMAIN" IN {
+        type master;
+        file "/etc/bind/master/myzone.db";
+        update-policy {
+                  grant keyname. zonesub TXT;
+        };
+
+};
+
+$RFC2136_CONF
+EOF
+
+
+chmod 775 /etc/bind/ -R
+chown root:named /etc/bind/ -R
+
+chmod 775 /config/log/named -R
+chown root:named /config/log/named -R
+
+/usr/sbin/named -c /etc/bind/named.conf -u named
