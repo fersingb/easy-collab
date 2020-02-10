@@ -23,4 +23,4 @@ docker run -d --rm  \
 	-p $IP:53:53 \
 	-p $IP:53:53/udp \
 	-v $(pwd)/data:/config \
-	easy-collab
+	fersingb/easy-collab
