@@ -1,25 +1,38 @@
 # easy-collab
 
 ## How to use
+
+
+This image will start a nginx server with letsencrypt support and a bind9 DNS server. It's purpose is to provide features similar to Burp Collaborator
+
+## How to run it
+
+Use the provided start.sh script in this repository, or run this command:
+
+```bash
+docker run -d \
+        --name=easy-collab \
+        -e PUID=$(id -u) \
+        -e PGID=$(id -g) \
+        -e DOMAIN=$DOMAIN \
+        -e IP=$IP \
+        -e STAGING=false \
+        -e DEFAULT_DHPARAMS=true \
+        -p 443:443 \
+        -p 80:80 `#optional` \
+        -p $IP:53:53 \
+        -p $IP:53:53/udp \
+        -v $(pwd)/data:/config \
+        --restart unless-stopped \
+        fersingb/easy-collab
 ```
-git clone https://github.com/fersingb/easy-collab.git
-cd easy-collab
-./start <YOUR DOMAIN> <YOUR PUBLIC IP>
-```
 
-This will start a Bind9 DNS server that will answer all requests made for the subdomains of `<YOUR DOMAIN>`. The answer's `A` record will be `<YOUR PUBLIC IP>`.
+- **DOMAIN** is the domain your machine is the NS for, BIND will answer requests for this domain and a wildcard Letsencrypt certificate will be generated for it.
+- **IP** is your public IP
+- **STAGING** do you want to use Letsencrypt's Staging environment. Should be false unless you're testing/debugging. If it's set to true then browsers won't trust the certificate
+- **DEFAULT_DHPARAMS** set it to true if you want to use the provided dhparams file. This will save some time on first start. If you want to generate your own dhparams file then set it to false
+- `-v $(pwd)/data:/config` the directory that will contain the www root, the log files, etc.
 
-Requests to your DNS servers are logged in `./logfile`
-
-The script also starts a nginx server that is configured to use letsencrypt certificates. On start, certbot will request a wildcard certificate for `<YOUR DOMAIN>`, using the Bind9 server for DNS validation. 
-
-After that you'll be able to server content from `./nginx/www/` on port 443 with a valid certificate. Plain HTTP on port 80 works as well.
-
-The nginx server also comes with support for PHP. Files in `./nginx/www/` that end with `.php` will be interpreted.
-
-The nginx logs are in `./nginx/logs/nginx/`
-
-Note: The first start might take some time and you'll see a high CPU usage during that time. This is because of the dhparams generation and it will only happen on the first start as long as you don't delete `./nginx/`
 
 ## Requirements
 - Docker
