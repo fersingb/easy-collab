@@ -1,7 +1,6 @@
 # easy-collab
 
-## How to use
-
+## Description
 
 This image will start a nginx server with letsencrypt support and a bind9 DNS server. It's purpose is to provide features similar to Burp Collaborator
 
