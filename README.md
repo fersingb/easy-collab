@@ -36,7 +36,10 @@ docker run -d \
 ## Requirements
 - Docker
 - Your machine is configured as the NS for your domain (or subdomain)
-
+```
+<subdomain>           60 IN NS     <my-machine-name>.domain.
+<my-machine-name>     60 IN A      <my-machine-ip>
+```
 ## Credits
 This project is based on those 2 projects:
 - https://github.com/linuxserver/docker-letsencrypt
