@@ -32,14 +32,19 @@ docker run -d \
 - **DEFAULT_DHPARAMS** set it to true if you want to use the provided dhparams file. This will save some time on first start. If you want to generate your own dhparams file then set it to false
 - `-v $(pwd)/data:/config` the directory that will contain the www root, the log files, etc.
 
+Here are some files/dir you might be interested in:
+- `./data/www`: nginx root dir
+- `./data/log/named/named.log`: DNS logs
+- `./data/log/nginx/access.log`: nginx access logs
+- `./data/log/nginx/modsec_audit.log`: nginx full request-response logs (modsecurity audit logs)
 
 ## Requirements
 - Docker
-- Your machine is configured as the NS for your domain (or subdomain)
-```
-<subdomain>           60 IN NS     <my-machine-name>.domain.
-<my-machine-name>     60 IN A      <my-machine-ip>
-```
+- Your machine is configured as the NS for your domain (or subdomain)::
+
+        <subdomain>           60 IN NS     <my-machine-name>.domain.
+        <my-machine-name>     60 IN A      <my-machine-ip>
+
 ## Credits
 This project is based on those 2 projects:
 - https://github.com/linuxserver/docker-letsencrypt
